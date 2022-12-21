@@ -1,11 +1,11 @@
 # This is https://github.com/dtanoglidis/BNN_LSBGs_ICML/blob/main/Calibration_Plots.ipynb made into a python script
 
-# usage: create calibration plots, using bnn trained on h5_weight_file_path to test on data_conparison_source
+# usage: create calibration plots using bnn trained on h5_weight_file_path to test on data_conparison_source
 
-# use: python plot_calibration.py [h5_weight_file_path] [data_comparison_source]
-# e.g: python plot_calibration.py bnn_train_out/original/{\'PA\': [0.0, 180.0], \'I_sky\': 22.23, \'ell\': [0.05, 0.7], \'n\': [0.5, 1.5], \'I_e\': [24.3, 25.5], \'r_e\': [2.5, 6.0]}_BNN_weight.h5 generated_data/original"
+# use: python plot_calibration.py [h5_weight_file_path] [data_comparison_source] [out_directory_name]
+# e.g: python plot_calibration.py bnn_train_out/original/{\'PA\': [0.0, 180.0], \'I_sky\': 22.23, \'ell\': [0.05, 0.7], \'n\': [0.5, 1.5], \'I_e\': [24.3, 25.5], \'r_e\': [2.5, 6.0]}_BNN_weight.h5 generated_data/original" "out_directory_name"
 
-# data output is at ./calibration_plots/
+# data output is at ./calibration_plots/out_directory_name
 
 #==============================================================
 # TODO:
@@ -23,6 +23,7 @@ from matplotlib.patches import Ellipse
 import time
 import sys
 import os
+import joblib as jl
 # Import resampling, we will need it for bootstap resampling
 from sklearn.utils import resample #Resampling
 
@@ -316,10 +317,10 @@ def main(model, weight_source: str, motherpath: str):
     #median_preds = np.median(inv_sample,axis=1)
     # Get standard deviations
     #std_preds = np.std(inv_sample,axis=1)
-    return np.asarray(inv_sample), y_keep
+    return np.asarray(inv_sample), y_keep, sample
 
 
-def make_calibration(sample_eff, eff_true, title: str, out_dir: str='./calibration_plotsies'):
+def make_calibration(sample_eff, eff_true, title: str, out_dir: str):
     # Percents
     percents = np.zeros(20)
     for i in range(20):
@@ -368,7 +369,8 @@ def make_calibration(sample_eff, eff_true, title: str, out_dir: str='./calibrati
 if __name__ == "__main__":
     plot_pretty()
     model = get_model()
-    inv_sampl, y_keep = main(model, sys.argv[1], sys.argv[2])
+    inv_sampl, y_keep, sample = main(model, sys.argv[1], sys.argv[2])
+    out_dir = str(sys.argv[3])
     # Effective radius
     sample_r_eff = inv_sampl[:,:,-1]
     r_eff_true = y_keep[:,-1]
@@ -391,12 +393,18 @@ if __name__ == "__main__":
                 "sersic index $n$": (sample_n, n_true),
                 "ellipticity $\epsilon$": (sample_ell, ell_true),
                 "position angle PA": (sample_PA, PA_true)}
+
     try:
         os.mkdir(os.path.join('./', 'calibration_plots'))
+        os.mkdir(os.path.join('./calibration_plots/',out_dir))
     except FileExistsError:
+        print()
 
     print("done prepping. Now onto making calibration plots")
     calibration_dict = {}
     for param in dictionary.keys():
         sample, true = dictionary[param]
-        make_calibration(sample, true, param)
+        make_calibration(sample, true, param, f'./calibration_plots/{out_dir}')
+
+    print("savings samples as samples.jl")
+    jl.dump(samples, './calibration_plots/{out_dir}')

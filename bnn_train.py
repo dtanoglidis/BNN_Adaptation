@@ -3,7 +3,7 @@
 # usage: run BNN on data presented in data_stash/
 
 # to run: python bnn_train.py [dataset_motherpath] [config_path] [output_path]
-# e.g:    python bnn_traom.py generated_dataset/original/{\'PA\': [0.0, 180.0], \'I_sky\': 22.23, \'ell\': [0.05, 0.7], \'n\': [0.5, 1.5], \'I_e\': [24.3, 25.5], \'r_e\': [2.5, 6.0]}_BNN_weight.h5 param_config/original bnn_train_out/
+# e.g:    python bnn_traom.py generated_dataset/{\'PA\': [0.0, 180.0], \'I_sky\': 22.23, \'ell\': [0.05, 0.7], \'n\': [0.5, 1.5], \'I_e\': [24.3, 25.5], \'r_e\': [2.5, 6.0]}/ param_config/original bnn_train_out/name
 
 #==============================================================
 # TODO:
@@ -175,8 +175,8 @@ def train(model, x_train, x_val, y_train, y_val, path):
               shuffle=True,
               validation_data=(X_val,y_val_sc))
 
-    model.save_weights(f'{path}_BNN_weight.h5',overwrite=True)
-    print(f"model weights saved as {path}_BNN_weight.h5*.pdf")
+    model.save_weights(f'{path}/BNN_weight.h5',overwrite=True)
+    print(f"model weights saved as {path}/BNN_weight.h5*.pdf")
 
     history_dict = model.history.history
     train_loss = history_dict['loss']
@@ -195,15 +195,12 @@ def train(model, x_train, x_val, y_train, y_val, path):
     plt.plot(Epochs_sp, val_loss , c = 'dodgerblue',linewidth=2.5,label='Validation loss')
 
     # ==========================================
-    # ==========================================
     plt.grid(ls='--',alpha=0.6)
     plt.xlabel('Epoch', fontsize=17);plt.ylabel('Loss',fontsize=17)
     plt.legend(frameon=True, loc='upper right', fontsize=17)
     plt.tick_params(axis='both', labelsize=14.5)
 
-    #plt.xlim(20,)
-    #plt.ylim(0,0.4)
-    plt.savefig(f"{path}_Loss.pdf")
+    plt.savefig(f"{path}/Loss.pdf")
 
     f.clear()
     plt.close(f)
@@ -218,11 +215,9 @@ def train(model, x_train, x_val, y_train, y_val, path):
     plt.legend(frameon=True, loc='upper right', fontsize=17)
     plt.tick_params(axis='both', labelsize=14.5)
 
-    #plt.xlim(20,)
-    #plt.ylim(0.1,0.4)
-    plt.savefig(f"{path}_MAE.pdf")
+    plt.savefig(f"{path}/MAE.pdf")
 
-    print(f"plots saved as {path}_*.pdf")
+    print(f"plots saved as {path}/*.pdf")
     f.clear()
     plt.close(f)
 
@@ -233,9 +228,13 @@ if __name__ == "__main__":
     dataset_path = sys.argv[1] # ../out_data/
     out_dir = sys.argv[3]
     try:
-        os.mkdir(os.path.join('./', str(out_dir)))
+        os.mkdir(os.path.join('./', 'bnn_train_out'))
     except FileExistsError:
-
+        print()
+    try:
+        os.mkdir(os.path.join('./bnn_train_out/', str(out_dir)))
+    except FileExistsError:
+        print()
     config_file = open(sys.argv[2], 'r').readlines()
     param_list = [ast.literal_eval(param) for param in config_file]
     model = compile_model()

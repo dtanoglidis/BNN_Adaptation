@@ -7,8 +7,8 @@
 
 #==============================================================
 # TODO:
-# [ ] ckean up code
-# [ ] last run to check
+# [x] ckean up code
+# [x] last run to check
 #==============================================================
 
 import numpy as np
@@ -113,8 +113,6 @@ def create_population(nsim=100, x=SIZE//2, y=SIZE//2, I_sky = 23,
     params['I_e']  = np.random.uniform(I_e[0],I_e[1],nsim)
     params['r_e']  = np.random.uniform(r_e[0],r_e[1],nsim)
 
-    #jl.dump(params, './out_data/WC_plot_dataset/params_uniform.jl')
-    #print("dumped")
     return params
 
 
@@ -239,8 +237,7 @@ def main(create_population_param: dict):
 
 
     plt.subplots_adjust(wspace=0.01, hspace=0.03)
-    plt.savefig(f"out_data/{param}/plot.pdf")
-    #plt.show()
+    plt.savefig(f"generated_datasets/{param}/plot.pdf")
 
     f.clear()
     plt.close(f)
@@ -272,31 +269,36 @@ def main(create_population_param: dict):
 
     # save training, validation, test
     # Images
-    print(f"saving data to ./out_data/{create_population_param}/")
+    print(f"saving data to ./generated_datasets/{create_population_param}/")
 
-    np.save(f"out_data/{create_population_param}/X_train.npy",X_train)
-    np.save(f"out_data/{create_population_param}/X_val.npy",X_val)
-    np.save(f"out_data/{create_population_param}/X_test.npy",X_test)
+    np.save(f"generated_datasets/{create_population_param}/X_train.npy",X_train)
+    np.save(f"generated_datasets/{create_population_param}/X_val.npy",X_val)
+    np.save(f"generated_datasets/{create_population_param}/X_test.npy",X_test)
 
     # Labels
-    np.save(f"out_data/{create_population_param}/y_train.npy",y_train)
-    np.save(f"out_data/{create_population_param}/y_val.npy",y_val)
-    np.save(f"out_data/{create_population_param}/y_test.npy",y_test)
+    np.save(f"generated_datasets/{create_population_param}/y_train.npy",y_train)
+    np.save(f"generated_datasets/{create_population_param}/y_val.npy",y_val)
+    np.save(f"generated_datasets/{create_population_param}/y_test.npy",y_test)
 
     # Scaling
-    np.save(f"out_data/{create_population_param}/scale_train.npy",scale_train)
-    np.save(f"out_data/{create_population_param}/scale_val.npy",scale_val)
-    np.save(f"out_data/{create_population_param}/scale_test.npy",scale_test)
+    np.save(f"generated_datasets/{create_population_param}/scale_train.npy",scale_train)
+    np.save(f"generated_datasets/{create_population_param}/scale_val.npy",scale_val)
+    np.save(f"generated_datasets/{create_population_param}/scale_test.npy",scale_test)
 
 
 if __name__ == "__main__":
     plot_pretty()
     config_file = open(sys.argv[1], 'r').readlines()
     param_list = [ast.literal_eval(param) for param in config_file]
+    try:
+        os.mkdir(os.path.join('./', 'generated_datasets'))
+    except FileExistsError:
+        print()
     for param in param_list:
         print("Doing param:", param)
         try:
             os.mkdir(os.path.join('generated_datasets/', str(param)))
         except FileExistsError:
+            print()
         main(param)
-    print("data created.............................................")
+    print("data (train sets, test sets, etc...) created.............................................")
