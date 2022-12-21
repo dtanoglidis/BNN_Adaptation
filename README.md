@@ -6,7 +6,7 @@ Repo that contains notes and code on Bayesian Neural Networks and Domain Adaptat
 Codes are built upon `https://github.com/dtanoglidis/BNN_LSBGs_ICML`
 
 # Modules and usages
-`data_gen.py`: generates synthetic data (test sets, training sets,...etc) for training and testing
+`data_gen.py`: generates synthetic data (test sets, training sets,...etc)
 
 `bnn_train.py`: trains bnn (i.e creating h5 files) on generated synthetic data
 
@@ -20,8 +20,11 @@ Codes are built upon `https://github.com/dtanoglidis/BNN_LSBGs_ICML`
 
 # The pipeline and how it's going:
 [x] synthetic data
+
 [x] train bnn
+
 [] hierarchical inference (not yet started)
+
 [x] calibration plotting
 
 # some current concerns to be addressed next meeting:
