@@ -53,7 +53,7 @@ NUM_TRAIN_EXAMPLES = 150000
 NUM_VAL_EXAMPLES = 10000
 NUM_TEST_EXAMPLES = 10000
 NUM_CLASSES = 5
-EPOCHS = 150
+EPOCHS = 2
 
 def plot_pretty(dpi=200, fontsize=9):
     plt.rc("savefig", dpi=dpi)       # dpi resolution of saved image files
@@ -175,8 +175,8 @@ def train(model, x_train, x_val, y_train, y_val, path):
               shuffle=True,
               validation_data=(X_val,y_val_sc))
 
-    model.save_weights(f'{path}/BNN_weight.h5',overwrite=True)
-    print(f"model weights saved as {path}/BNN_weight.h5*.pdf")
+    model.save_weights(f'{path}BNN_weight.h5',overwrite=True)
+    print(f"model weights saved as {path}BNN_weight.h5*.pdf")
 
     history_dict = model.history.history
     train_loss = history_dict['loss']
@@ -200,7 +200,7 @@ def train(model, x_train, x_val, y_train, y_val, path):
     plt.legend(frameon=True, loc='upper right', fontsize=17)
     plt.tick_params(axis='both', labelsize=14.5)
 
-    plt.savefig(f"{path}/Loss.pdf")
+    plt.savefig(f"{path}Loss.pdf")
 
     f.clear()
     plt.close(f)
@@ -215,9 +215,9 @@ def train(model, x_train, x_val, y_train, y_val, path):
     plt.legend(frameon=True, loc='upper right', fontsize=17)
     plt.tick_params(axis='both', labelsize=14.5)
 
-    plt.savefig(f"{path}/MAE.pdf")
+    plt.savefig(f"{path}MAE.pdf")
 
-    print(f"plots saved as {path}/*.pdf")
+    print(f"plots saved as {path}*.pdf")
     f.clear()
     plt.close(f)
 

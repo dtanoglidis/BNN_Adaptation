@@ -2,3 +2,4 @@ NOTE
 __pycache__/
 generated_datasets/
 bnn_train_out/
+notebook/*.jl
