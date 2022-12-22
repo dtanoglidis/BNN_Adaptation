@@ -23,13 +23,9 @@ Codes are built upon `https://github.com/dtanoglidis/BNN_LSBGs_ICML`
 
 [x] train bnn
 
-[] hierarchical inference (not yet started)
+[ ] hierarchical inference (not yet started)
 
 [x] calibration plotting
 
 # some current concerns to be addressed next meeting:
-<<<<<<< HEAD
-[] data generation phase: what does it mean to sample from data of different distributions? Is my current approach (data sampled from different distribution BEFORE being put into pyimfit for processing) correct?
-=======
-[] data generation phase: what does it mean to sample from data of different distributions? Is my current approach (data sampled from different distribution before being put into pyimfit for processing) correct?
->>>>>>> 4a05405 (readme)
+[ ] data generation phase: what does it mean to sample from data of different distributions? Is my current approach (data sampled from different distribution before being put into pyimfit for processing) correct?
