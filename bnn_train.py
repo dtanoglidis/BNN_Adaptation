@@ -7,8 +7,8 @@
 
 #==============================================================
 # TODO:
-# [ ] ckean up code
-# [ ] last run to check
+# [x] ckean up code
+# [x] last run to check
 #==============================================================
 
 # Import basic packages
@@ -53,7 +53,7 @@ NUM_TRAIN_EXAMPLES = 150000
 NUM_VAL_EXAMPLES = 10000
 NUM_TEST_EXAMPLES = 10000
 NUM_CLASSES = 5
-EPOCHS = 2
+EPOCHS = 150
 
 def plot_pretty(dpi=200, fontsize=9):
     plt.rc("savefig", dpi=dpi)       # dpi resolution of saved image files
@@ -154,6 +154,8 @@ def compile_model():
 
 
 def train(model, x_train, x_val, y_train, y_val, path):
+    path = 'bnn_train_out/'+path
+
     # load data
     # Images
     X_train = np.float64(np.load(x_train))
@@ -225,7 +227,7 @@ def train(model, x_train, x_val, y_train, y_val, path):
 
 if __name__ == "__main__":
     plot_pretty()
-    dataset_path = sys.argv[1] # ../out_data/
+    dataset_path = sys.argv[1]
     out_dir = sys.argv[3]
     try:
         os.mkdir(os.path.join('./', 'bnn_train_out'))
