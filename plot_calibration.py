@@ -265,7 +265,7 @@ def get_model():
 
 
 
-def main(model, weight_source: str, motherpath: str):
+def main(model, weight_source: str, motherpath: str, n_rands = 400):
     # Images
     # motherpath = "../../data_stash/out_data/original"
     X_test = np.float64(np.load(f"{motherpath}/X_test.npy"))
@@ -299,7 +299,7 @@ def main(model, weight_source: str, motherpath: str):
 
     #print(np.shape(sample))
 
-    n_rands = 400
+    #n_rands = 400
 
     for i in range(n_rands):
         pred_dist = model(X_keep)

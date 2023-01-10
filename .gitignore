@@ -4,3 +4,5 @@ generated_datasets/
 bnn_train_out/
 notebooks/*.jl
 notebooks/.*/
+miscellaneous_notes
+scraps/
