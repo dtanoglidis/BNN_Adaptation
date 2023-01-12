@@ -5,6 +5,8 @@
 File for conducting hierarchical inference, following Wagner-Carena's Ovejero.
 So far, the function `run_sampler` takes care of everything.
 
+to use: python3 hierarchical_inf.py [weight_source] [motherpath]
+
 
 -------------------------------------------
 : Overview                                :
@@ -39,7 +41,7 @@ import numpy as np
 import scipy.stats as stats
 import emcee, copy, sys
 
-from plot_calibration import main, get_model
+from plot_calibration import main, get_model, make_calibration
 
 
 ###########################################
@@ -52,22 +54,29 @@ def tbi():
 
 
 def make_target_eval_dict():
-    keys = ['hyp_len', 'hyp_sigma','hyp_init']
+    """
+    ovejero, target_eval_dict.keys() give
+    dict_keys(['hyp_len', 'hyp_init', 'hyp_sigma', 'hyp_prior', 'hyp_names', 'external_shear_gamma_ext', 'external_shear_psi_ext', 'lens_mass_center_x', 'lens_mass_center_y', 'lens_mass_e1', 'lens_mass_e2', 'lens_mass_gamma', 'lens_mass_theta_E'])
+    """
     tbi()
 
 
 
 def make_interim_eval_dict():
-    tbi()
-
-
-
-def make_hyp():
     """
-    hyp: np array with dimensions (n_hyperparameters).
-         These are the values of omega's parameters
+    maybe
+    dict_keys(['hyp_len', 'hyp_values', 'hyp_names', 'external_shear_gamma_ext', 'external_shear_psi_ext', 'lens_mass_center_x', 'lens_mass_center_y', 'lens_mass_e1', 'lens_mass_e2', 'lens_mass_gamma', 'lens_mass_theta_E'])
     """
     tbi()
+
+
+
+#def make_hyp():
+#    """
+#    hyp: np array with dimensions (n_hyperparameters).
+#         These are the values of omega's parameters
+#    """
+#    tbi()
 
 
 
@@ -79,13 +88,9 @@ def make_lens_params_train():
 
 
 
-def make_lens_samps():
-    tbi()
-
-
 
 def gen_samples(weight_source: str, motherpath: str, k: int):
-    """ [done]
+    """ [should b done]
     generating xi ~ BNN
 
     parameters:
@@ -97,10 +102,49 @@ def gen_samples(weight_source: str, motherpath: str, k: int):
     """
     model = get_model()
     sample, y_keep, _ = main(model, weight_source, motherpath, k)
+
     xi = sample
 
-    return xi
+    return xi, y_keep
 
+
+
+def plot(inv_sampl, true):
+    """
+    plotting code.
+    Have the choice of plotting non-inference and inference. Should we?
+    """
+
+    # plotting
+    # Effective radius
+    sample_r_eff = inv_sampl[:,:,-1]
+    r_eff_true = y_keep[:,-1]
+    # Mean Surface brightness
+    sample_I_eff = inv_sampl[:,:,-2]
+    I_eff_true = y_keep[:,-2]
+    # Sersic Index
+    sample_n = inv_sampl[:,:,-3]
+    n_true = y_keep[:,-3]
+    # Ellipticity
+    sample_ell = inv_sampl[:,:,-4]
+    ell_true = y_keep[:,-4]
+    # Position Angle
+    sample_PA = inv_sampl[:,:,-5]
+    PA_true = y_keep[:,-5]
+
+    # outdict: "name": (sample, true)
+    dictionary = {"radius $r_e$": (sample_r_eff, r_eff_true),
+                "surface brightness $I_e$": (sample_I_eff, I_eff_true),
+                "sersic index $n$": (sample_n, n_true),
+                "ellipticity $\epsilon$": (sample_ell, ell_true),
+                "position angle PA": (sample_PA, PA_true)}
+
+
+    print("done prepping. Now onto making calibration plots")
+    calibration_dict = {}
+    for param in dictionary.keys():
+        sample, true = dictionary[param]
+        make_calibration(sample, true, param, f'./hierarchical_inf_out')
 
 
 ###########################################
@@ -161,7 +205,7 @@ def log_p_xi_omega(hyp: np.array, eval_dict: dict, lens_params: list):
 	"""
 
     #lens_samps = make_lens_samps()
-    samples = make_lens_samps()
+    samples = xi
 
     # We iterate through each lens parameter and carry out the evaluation
 	logpdf = np.zeros((samples.shape[1],samples.shape[2]))
@@ -248,13 +292,8 @@ def initialize_sampler(n_walkers: int):
 
     Return Ensemble sampler and the current state
     """
-    hyp = make_hyp()
-    log_post_omega_ = log_post_omega(hyp)
-
-    try:
-        os.mkdir(os.path.join('./', 'hierarchical_inf_out'))
-    except FileExistsError:
-        print("hierarchical_inf_out/ exists")
+    #hyp = make_hyp()
+    #log_post_omega_ = log_post_omega(hyp)
 
     save_path = './hierarhical_inf_out'
 
@@ -269,7 +308,7 @@ def initialize_sampler(n_walkers: int):
         all_finite = True
         f_counter = 0.0
         for w_i in range(n_walkers):
-            if log_post_omega_(cur_state[w_i]) == -np.inf:
+            if log_post_omega(cur_state[w_i]) == -np.inf:
                 all_finite = False
                 f_counter +=1
                 cur_state[w_i] = cur_state[np.random.randint(n_walkers)]
@@ -308,5 +347,18 @@ def run_sampler(n_samps: int, n_walkers: int):
 
 
 if __name__=="__main__":
+    try:
+        os.mkdir(os.path.join('./', 'hierarchical_inf_out'))
+    except FileExistsError:
+        print()
+
     global target_eval_dict
     target_eval_dict = make_target_eval_dict()
+
+    global xi
+    xi, y_keep = gen_samples(str(sys.argv[1]), str(sys.argv[2]), 1000)
+
+    sampler_ran = run_sampler(100, 50)
+
+    inv_sampl = sampler_ran.get_chain() #TODO
+    plot(inv_sampl, y_keep)
