@@ -6,3 +6,4 @@ notebooks/*.jl
 notebooks/.*/
 miscellaneous_notes
 scraps/
+hier_inf/
