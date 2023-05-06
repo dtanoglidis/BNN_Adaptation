@@ -83,7 +83,6 @@ n_test = 1000
 #---------------------------------------------------------------------
 # Adjust rc parameters to make plots pretty
 def plot_pretty(dpi=200, fontsize=9):
-
     plt.rc("savefig", dpi=dpi)       # dpi resolution of saved image files
     plt.rc('text', usetex=True)      # use LaTeX to process labels
     plt.rc('font', size=fontsize)    # fontsize
@@ -265,15 +264,15 @@ def get_model():
 
 
 
-def main(model, weight_source: str, motherpath: str, n_rands = 400):
+def main(model, weight_source: str, compare_path: str, out_dir: str, n_rands = 400):
     # Images
-    # motherpath = "../../data_stash/out_data/original"
-    X_test = np.float64(np.load(f"{motherpath}/X_test.npy"))
+    # compare_path = "../../data_stash/out_data/original"
+    X_test = np.float64(np.load(f"{compare_path}/X_test.npy"))
     # Labels
-    y_train = np.float64(np.load(f"{motherpath}/y_train.npy"))
-    y_test = np.float64(np.load(f"{motherpath}/y_test.npy"))
+    y_train = np.float64(np.load(f"{compare_path}/y_train.npy"))
+    y_test = np.float64(np.load(f"{compare_path}/y_test.npy"))
     #Scaling
-    scale_test = np.float64(np.load(f"{motherpath}/scale_test.npy"))
+    scale_test = np.float64(np.load(f"{compare_path}/scale_test.npy"))
 
     scaler = StandardScaler()
     # Rescale the labels
@@ -306,6 +305,25 @@ def main(model, weight_source: str, motherpath: str, n_rands = 400):
         sample_loc = np.asarray(pred_dist.sample(300))
         sample = np.concatenate((sample,sample_loc))
 
+
+    # plotting some chainconsumers
+    sample_new_single = scaler.inverse_transform(np.asarray(sample[:,530,:]))
+
+    c = ChainConsumer()
+    c.add_chain(sample_new_single,parameters=["PA", "e", "n", "I_e", "r"])
+    fig = c.plotter.plot(figsize=(8,8), truth=y_keep[530])
+    fig.savefig(f"./calibration_plots/{out_dir}/chainconsumer_530.png")
+
+
+    sample_new_single = scaler.inverse_transform(np.asarray(sample[:,130,:]))
+
+    c = ChainConsumer()
+    c.add_chain(sample_new_single,parameters=["PA", "e", "n", "I_e", "r"])
+    fig = c.plotter.plot(figsize=(8,8), truth=y_keep[130])
+    fig.savefig(f"./calibration_plots/{out_dir}/chainconsumer_130.png")
+
+
+
     inv_sample = []
     for i in range(n_test):
         inv_sample_loc = scaler.inverse_transform(sample[:,i,:])
@@ -317,6 +335,7 @@ def main(model, weight_source: str, motherpath: str, n_rands = 400):
     #median_preds = np.median(inv_sample,axis=1)
     # Get standard deviations
     #std_preds = np.std(inv_sample,axis=1)
+
     return np.asarray(inv_sample), y_keep, sample
 
 
@@ -369,7 +388,24 @@ def make_calibration(sample_eff, eff_true, title: str, out_dir: str):
 if __name__ == "__main__":
     plot_pretty()
     model = get_model()
-    inv_sampl, y_keep, sample = main(model, sys.argv[1], sys.argv[2])
+    out_dir = str(sys.argv[3])
+
+    try:
+        os.mkdir(os.path.join('./', 'calibration_plots'))
+    except FileExistsError:
+        print('calibration_plots exists')
+    try:
+        os.mkdir(os.path.join('./calibration_plots/',out_dir))
+    except FileExistsError:
+        print(f"{out_dir} exists")
+
+    inv_sampl, y_keep, sample = main(model, sys.argv[1], sys.argv[2], out_dir)
+
+    print("savings inv_samples and y_keep as npy files")
+    np.save(f"./calibration_plots/{out_dir}/inv_samples.npy", inv_sampl)
+    np.save(f"./calibration_plots/{out_dir}/y_keep.npy", y_keep)
+
+
     out_dir = str(sys.argv[3])
     # Effective radius
     sample_r_eff = inv_sampl[:,:,-1]
@@ -386,6 +422,7 @@ if __name__ == "__main__":
     # Position Angle
     sample_PA = inv_sampl[:,:,-5]
     PA_true = y_keep[:,-5]
+    #breakpoint()
 
     # outdict: "name": (sample, true)
     dictionary = {"radius $r_e$": (sample_r_eff, r_eff_true),
@@ -394,17 +431,9 @@ if __name__ == "__main__":
                 "ellipticity $\epsilon$": (sample_ell, ell_true),
                 "position angle PA": (sample_PA, PA_true)}
 
-    try:
-        os.mkdir(os.path.join('./', 'calibration_plots'))
-        os.mkdir(os.path.join('./calibration_plots/',out_dir))
-    except FileExistsError:
-        print()
-
     print("done prepping. Now onto making calibration plots")
     calibration_dict = {}
     for param in dictionary.keys():
         sample, true = dictionary[param]
         make_calibration(sample, true, param, f'./calibration_plots/{out_dir}')
-
-    print("savings samples as samples.jl")
-    jl.dump(samples, './calibration_plots/{out_dir}')
+    print("done all")

@@ -102,6 +102,10 @@ def create_population(nsim=100, x=SIZE//2, y=SIZE//2, I_sky = 23,
     I_e *= ones
     r_e *= ones
 
+
+
+    #PA ~ N(90,20) ; ellipticity ~N(0.5,0.1); sersic  n ~ N(1.0,0.1); Surf brightness I~ N(25.0, 0.2); eff radius r_e ~ N(4.0,0.5)
+
     params = np.recarray(nsim,dtype=DTYPE)
     params['id']   = np.arange(nsim)
     params['x']    = np.random.uniform(x[0],x[1],nsim)
@@ -113,6 +117,12 @@ def create_population(nsim=100, x=SIZE//2, y=SIZE//2, I_sky = 23,
     params['I_e']  = np.random.uniform(I_e[0],I_e[1],nsim)
     params['r_e']  = np.random.uniform(r_e[0],r_e[1],nsim)
 
+    #params['I_sky'] = np.random.normal(I_sky[0],I_sky[1],nsim)
+    #params['PA'] = np.random.normal(PA[0],PA[1],nsim)
+    #params['ell'] = np.random.normal(ell[0],ell[1],nsim)
+    #params['n']  = np.random.normal(n[0],n[1],nsim)
+    #params['I_e']  = np.random.normal(I_e[0],I_e[1],nsim)
+    #params['r_e']  = np.random.normal(r_e[0],r_e[1],nsim)
     return params
 
 

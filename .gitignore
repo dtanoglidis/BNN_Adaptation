@@ -2,6 +2,7 @@ NOTE
 __pycache__/
 generated_datasets/
 bnn_train_out/
+notebooks/
 notebooks/*.jl
 notebooks/.*/
 miscellaneous_notes
