@@ -18,7 +18,7 @@ import asyncio
 from chainconsumer import ChainConsumer
 from sklearn.preprocessing import StandardScaler
 import sys
-import multiprocessing
+from multiprocessing import Pool, cpu_count
 
 # load pystan
 import stan
@@ -27,6 +27,12 @@ import pandas as pd
 import seaborn as sns
 import scipy.stats as stats
 import random
+import os
+
+os.environ["OMP_NUM_THREADS"] = "1"
+ncpu = cpu_count()
+
+print("{0} CPUS".format(ncpu))
 
 # these samples are obtained through sampling from trained bnn
 # in other words: bnn_sampls = xi_k ~ p(xi_k | d_k, Omega_int)
@@ -49,7 +55,47 @@ def calc_loglik(x, theta, minU, maxU):
     return logsumexp(norm.logpdf(x, mu, sigma)-uniform.logpdf(x, minU, maxU))
 
 
-def eq10(name, inv_path, real_path, minU=2.0, maxU=8.0, ndim=2, nwalkers=4, nsteps=100, nsamples=1000, stepsize=5, burnin=100):
+def log_likelihood(theta, xi, minU, maxU):
+    # review eq 10 log derivation (summing)
+    #return logsumexp(norm.logpdf(xi, mu, sigma)-uniform.logpdf(xi, minU, maxU))
+    loglik = []
+    for x in xi:
+        loglik.append(calc_loglik(x, theta, minU, maxU))
+        print("log_likelihood calculation theta=", theta)
+
+    # NOTE: check loglik
+        #lp = norm.logpdf(xi, mu, sigma).sum()
+        #lp -= uniform.logpdf(xi, minU, maxU).sum()
+        #return lp
+    return np.sum(np.array(loglik))
+    #return logsumexp(norm.logpdf(xi, mu, sigma)-uniform.logpdf(xi, minU, maxU))
+
+def log_prior(theta, minU, maxU):
+    # log p(Omega)
+    mu, sigma = theta
+    if sigma<=0:
+        return -np.inf
+    lp = norm.logpdf(mu, sigma)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp
+
+
+def log_posterior(theta, xi, minU, maxU):
+    # to see whether theta actually has mu and sigma in it
+    print("calculating theta (mu, sigma)=", theta)
+    lp = log_prior(theta, minU, maxU)
+    if np.isinf(lp):
+        return -np.inf
+    return lp + log_likelihood(theta, xi, minU, maxU)
+
+
+
+
+#--------------------------------------------------------------------------------------------------
+# EQ 10
+#--------------------------------------------------------------------------------------------------
+def eq10(name, inv_path, real_path, minU=2.0, maxU=8.0, ndim=2, nwalkers=8, nsteps=200, nsamples=1000, burnin=100):
     # load necessary data (r)
     inv_sampl = np.load(str(inv_path))
     y_keep = np.load(str(real_path))
@@ -65,49 +111,19 @@ def eq10(name, inv_path, real_path, minU=2.0, maxU=8.0, ndim=2, nwalkers=4, nste
     new_sample_r_eff = np.array([np.random.uniform(minU, maxU) if i<minU or i>maxU else i for i in new_sample_r_eff])
 
 
-    def log_likelihood(theta, xi, minU, maxU):
-        # review eq 10 log derivation (summing)
-        #return logsumexp(norm.logpdf(xi, mu, sigma)-uniform.logpdf(xi, minU, maxU))
-        loglik = []
-        for x in xi:
-            loglik.append(calc_loglik(x, theta, minU, maxU))
-
-        # NOTE: check loglik
-            #lp = norm.logpdf(xi, mu, sigma).sum()
-            #lp -= uniform.logpdf(xi, minU, maxU).sum()
-            #return lp
-        return np.sum(np.array(loglik))
-        #return logsumexp(norm.logpdf(xi, mu, sigma)-uniform.logpdf(xi, minU, maxU))
-
-    def log_prior(theta, minU, maxU):
-        # log p(Omega)
-        mu, sigma = theta
-        if sigma<=0:
-            return -np.inf
-        lp = norm.logpdf(mu, sigma)
-        if not np.isfinite(lp):
-            return -np.inf
-        return lp
-
-
-    def log_posterior(theta, xi, minU, maxU):
-        # to see whether theta actually has mu and sigma in it
-        print("calculating theta (mu, sigma)=", theta, "and xi=", xi)
-        lp = log_prior(theta, minU, maxU)
-        if np.isinf(lp):
-            return -np.inf
-        return lp + log_likelihood(theta, xi, minU, maxU)
-
-    initial_guess = np.array([[7.,7.],[-2,10],[0,0],[9,9]])  # initialize emcee walkers
+    initial_guess = np.array([[7.,7.],[-2,10],[0,0],[9,9]]*2)  # initialize emcee walkers
 
     pos = initial_guess + 1e-3 * np.random.randn(nwalkers, ndim)
     #nsteps = 10000
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_posterior, args=(new_sample_r_eff.astype(np.float32), minU, maxU), a=stepsize)
-    print("running mcmc")
-    sampler.run_mcmc(pos, burnin, progress=True)
-    sampler.reset() # reset after burn in
 
-    sampler.run_mcmc(pos, nsteps, progress=True)
+    with Pool() as pool:
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_posterior, args=(new_sample_r_eff.astype(np.float32), minU, maxU), pool=pool) # used to have a = stepsize - which was in the param but not anymore. let's see how this goes`
+        print("running mcmc")
+        sampler.run_mcmc(pos, burnin, progress=True)
+        sampler.reset() # reset after burn in
+
+        sampler.run_mcmc(pos, nsteps, progress=True)
+
 
     f = sampler.get_chain(flat=True)
     print("acceptance:", sampler.acceptance_fraction)
@@ -118,6 +134,9 @@ def eq10(name, inv_path, real_path, minU=2.0, maxU=8.0, ndim=2, nwalkers=4, nste
 
 
 
+#--------------------------------------------------------------------------------------------------
+# EQ 111
+#--------------------------------------------------------------------------------------------------
 def eq11(data=None, mean_BNN=0, sigma_BNN=1):
     # begin of stan code
     data = pd.read_pickle('eq10_50.pkl')

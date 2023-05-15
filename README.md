@@ -23,6 +23,6 @@ Codes are built upon `https://github.com/dtanoglidis/BNN_LSBGs_ICML`
 
 [x] train bnn
 
-[ ] hierarchical inference
+[] hierarchical inference
 
 [x] calibration plotting
