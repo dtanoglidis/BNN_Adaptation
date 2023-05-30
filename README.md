@@ -10,7 +10,7 @@ Codes are built upon `https://github.com/dtanoglidis/BNN_LSBGs_ICML`
 
 `bnn_train.py`: trains bnn (i.e creating h5 files) on generated synthetic data
 
-`hierarchical_inf.py`: doing hierarchical inference on trained bnn
+`hierarchical_inf.py`: doing hierarchical inference on trained bnn output. Currently named `normal.py`
 
 `plot_calibration.py`: plot calibration plots (see notebook for a demonstration)
 
@@ -23,6 +23,6 @@ Codes are built upon `https://github.com/dtanoglidis/BNN_LSBGs_ICML`
 
 [x] train bnn
 
-[] hierarchical inference
+[x] hierarchical inference
 
 [x] calibration plotting
